@@ -1,0 +1,56 @@
+name: Version Bump
+description: Compute the next semver version from the latest <prefix>X.Y.Z git tag on the remote.
+author: wuguishifu
+
+branding:
+  icon: tag
+  color: blue
+
+inputs:
+  bump-type:
+    description: major, minor or patch
+    required: false
+    default: patch
+  tag-prefix:
+    description: >-
+      Prefix in front of X.Y.Z in tag names, e.g. "v" or "topaz-v" for per-app tags in a
+      monorepo. May be empty.
+    required: false
+    default: v
+  initial-version:
+    description: >-
+      Version to bump from when no matching tag exists yet. The default of 0.0.0 means the
+      first major bump is 1.0.0.
+    required: false
+    default: 0.0.0
+  remote:
+    description: Git remote to read tags from. The repo must be checked out first.
+    required: false
+    default: origin
+
+outputs:
+  version:
+    description: New version, e.g. 1.2.3
+    value: ${{ steps.bump.outputs.version }}
+  tag:
+    description: New tag, i.e. tag-prefix + version, e.g. v1.2.3
+    value: ${{ steps.bump.outputs.tag }}
+  previous-version:
+    description: Version of the latest existing tag, or empty if there was none
+    value: ${{ steps.bump.outputs.previous-version }}
+  previous-tag:
+    description: Latest existing tag, or empty if there was none
+    value: ${{ steps.bump.outputs.previous-tag }}
+
+runs:
+  using: composite
+  steps:
+    - name: Bump version
+      id: bump
+      shell: bash
+      env:
+        BUMP_TYPE: ${{ inputs.bump-type }}
+        TAG_PREFIX: ${{ inputs.tag-prefix }}
+        INITIAL_VERSION: ${{ inputs.initial-version }}
+        REMOTE: ${{ inputs.remote }}
+      run: bash "$GITHUB_ACTION_PATH/scripts/version-bump.sh"

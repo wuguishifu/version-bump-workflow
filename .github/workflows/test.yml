@@ -1,0 +1,57 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: run script tests
+        run: ./test/test.sh
+
+  actions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: bump version
+        id: version
+        uses: ./
+        with:
+          bump-type: minor
+
+      - name: set package version
+        uses: ./set-package-version
+        with:
+          version: ${{ steps.version.outputs.version }}
+          path: test/fixtures/package.json
+
+      - name: docker image
+        id: docker
+        uses: ./docker-image
+        with:
+          version: ${{ steps.version.outputs.version }}
+          image: ${{ github.repository }}
+
+      - name: check outputs
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
+          IMAGE: ${{ steps.docker.outputs.image }}
+        run: |
+          set -x
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.0$ ]]
+          [ "$TAG" == "v$VERSION" ]
+          grep -q "\"version\": \"$VERSION\"" test/fixtures/package.json
+          [[ "$IMAGE" == ghcr.io/*:"$VERSION"-* ]]

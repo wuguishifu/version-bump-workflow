@@ -1,0 +1,45 @@
+name: Docker Image Version
+description: Build docker image references tagged <version>-<short sha> and latest.
+author: wuguishifu
+
+branding:
+  icon: box
+  color: blue
+
+inputs:
+  version:
+    description: Version to tag the image with, e.g. 1.2.3 or topaz-v1.2.3
+    required: true
+  image:
+    description: Image path within the registry, e.g. wuguishifu/universe/topaz
+    required: true
+  registry:
+    description: Registry host
+    required: false
+    default: ghcr.io
+
+outputs:
+  tag:
+    description: Image tag, e.g. 1.2.3-abcd1234
+    value: ${{ steps.docker.outputs.tag }}
+  image:
+    description: Full versioned image reference, e.g. ghcr.io/owner/app:1.2.3-abcd1234
+    value: ${{ steps.docker.outputs.image }}
+  image-latest:
+    description: Full latest image reference, e.g. ghcr.io/owner/app:latest
+    value: ${{ steps.docker.outputs.image-latest }}
+  image-name:
+    description: Image reference without a tag, e.g. ghcr.io/owner/app
+    value: ${{ steps.docker.outputs.image-name }}
+
+runs:
+  using: composite
+  steps:
+    - name: Compute docker image
+      id: docker
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        IMAGE: ${{ inputs.image }}
+        REGISTRY: ${{ inputs.registry }}
+      run: bash "$GITHUB_ACTION_PATH/../scripts/docker-image.sh"

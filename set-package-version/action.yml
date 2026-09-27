@@ -1,0 +1,26 @@
+name: Set Package Version
+description: Write a version into the top-level "version" field of a package.json, preserving its formatting.
+author: wuguishifu
+
+branding:
+  icon: package
+  color: blue
+
+inputs:
+  version:
+    description: Version to write, e.g. 1.2.3
+    required: true
+  path:
+    description: Path to the package.json
+    required: false
+    default: package.json
+
+runs:
+  using: composite
+  steps:
+    - name: Set package version
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        PACKAGE_JSON: ${{ inputs.path }}
+      run: bash "$GITHUB_ACTION_PATH/../scripts/set-package-version.sh"
